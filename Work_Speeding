@@ -1,0 +1,75 @@
+
+import pandas as pd
+
+df=pd.read_excel('C:\\Users\\Mike friend\\Desktop\\Tickets analysis.xlsx')
+#df=pd.read_excel('C:\\Users\\Mike friend\\Desktop\\test.xlsx')
+
+
+
+df=df.sort_values(by='Closed At')
+
+
+
+
+print(df.head(15))
+
+
+
+
+
+tech=df.Technician.unique()
+print(tech)
+
+
+
+
+
+new_dict={}
+
+for t in tech:
+    print(t)
+    new_df=df[df.Technician==t]
+    new_df['Closed At'] = pd.to_datetime(new_df['Closed At'])
+    
+    new_df=new_df.sort_values(by='Closed At')
+    diffs = new_df['Closed At'] - df['Closed At'].shift(1)
+    new_df['diffs']=diffs
+    laps = diffs <= pd.Timedelta('30 min')
+    new_df['laps']=laps
+    start_found=False
+    master_count=0
+    for index, row in new_df.iterrows():
+        if master_count>0:
+                diffs=row['Closed At']-start_time
+                #Sanity Threshold
+                laps=(diffs<= pd.Timedelta('30 min'))
+                start_time=row['Closed At']
+                if start_found==False:
+                    if laps==True:
+                        start_found=True
+                        key=row['Technician']+'||'+str(row['Closed At'])
+                        cnt=1
+                    else:
+                        cnt=1
+                else:
+                    if laps==True:
+                        cnt+=1
+                    else:
+                        cnt+=1
+                        value=str(cnt)+'||'+str(row['Closed At'])
+                        start_found=False
+                        new_dict[key]=value
+        else:
+            start_time=row['Closed At']
+            master_count+=1
+            
+
+
+print(new_dict)
+
+
+final=pd.DataFrame.from_dict(new_dict,orient='index')
+
+final.to_csv('Desktop\_output.csv')
+new_df.to_csv('Desktop\_output1.csv')
+
